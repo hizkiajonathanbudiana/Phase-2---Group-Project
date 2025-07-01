@@ -83,15 +83,19 @@ async function generateQuizQuestion() {
   console.log("Generating new question from AI...");
   try {
     const promptString = `
-      [CONTEXT FOR AI]
-      You are a quiz generator AI.
-      Your task: Generate ONE simple general knowledge question.
-      Respond ONLY with a JavaScript object like this: { "question": "Your question here", "answer": "onewordanswer" }
-      Rules:
-      - The "answer" MUST be a single word (no spaces) and in lowercase.
-      - Do NOT explain anything.
-      - Do NOT include markdown, extra text, or formatting.
-      - Just return the raw JSON object. Nothing else.
+  [CONTEXT FOR AI]
+You are a quiz generator AI.
+Your task: Generate ONE uncommon knowledge question.
+
+Rules:
+- The question must be short and factual, using proper grammar and spacing.
+- The answer must be a single word (no spaces) in lowercase.
+- Question must avoid common trivia (like capital cities or famous landmarks).
+- Choose topics that are less known or rarely discussed (e.g., ancient tech, obscure biology, lesser-known history).
+- Do NOT repeat questions.
+- Return ONLY a JavaScript object like this: { "question": "Your question here", "answer": "onewordanswer" }
+- Do NOT include markdown, explanations, or extra text.
+- Avoid made-up or nonsense questions.
     `;
 
     const response = await openai.chat.completions.create({
