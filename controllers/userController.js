@@ -58,7 +58,7 @@ class userController {
 
   static async resetPasswordHandler(req, res, next) {
     try {
-      const { newPassword, verifyCode } = req.body;
+      const { password, verifyCode } = req.body;
       if (!verifyCode) {
         return res
           .status(400)
@@ -77,7 +77,7 @@ class userController {
       console.log("VERIFICATION CODE MATCHES");
 
       await User.update(
-        { isVerified: true, password: newPassword },
+        { isVerified: true, password: password },
         { where: { id: decoded.id } }
       );
       res.status(200).json({ message: "Email verified successfully" });
@@ -202,12 +202,14 @@ class userController {
 
   static async registerHandler(req, res, next) {
     try {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        throw new Error("INVALIDLOGIN");
+      const { username, email, password } = req.body;
+      if (!email || !password || !username) {
+        return res
+          .status(400)
+          .json({ message: "Email, password, and username are required" });
       }
 
-      const newUser = await User.create({ email, password });
+      const newUser = await User.create({ email, password, username });
       res.status(201).json(newUser);
     } catch (error) {
       next(error);
