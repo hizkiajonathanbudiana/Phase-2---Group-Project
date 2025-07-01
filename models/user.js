@@ -49,18 +49,18 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "User",
       hooks: {
-        beforeCreate: (user, options) => {
+        beforeCreate: async (user, options) => {
           if (!user.password) {
             user.password = null; // Ensure password is null if not provided
           } else {
             // Hash the password if provided
-            user.password = hashPassword(user.password);
+            user.password = await hashPassword(user.password);
           }
         },
-        beforeUpdate: (user, options) => {
+        beforeUpdate: async (user, options) => {
           if (user.changed("password")) {
             // Hash the password if it has been changed
-            user.password = hashPassword(user.password);
+            user.password = await hashPassword(user.password);
           }
         },
       },
