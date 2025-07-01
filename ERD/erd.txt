@@ -1,0 +1,23 @@
+
+
+Table Users {
+  id integer [primary key]
+  email varchar [unique]
+  password varchar
+  googleSub varchar [unique]  
+  provider varchar
+  updatedAt timestamp
+  createdAt timestamp
+}
+
+Table Status {
+  id integer [primary key]
+  solved integer
+  UserId integer 
+  status varchar
+    updatedAt timestamp
+  createdAt timestamp
+}
+
+
+Ref: Users.id - Status.UserId
