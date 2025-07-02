@@ -16,29 +16,35 @@ const app = express();
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 
-// --- KONSTANTA UNTUK GAME LOGIC ---
 const NEW_ROUND_DELAY_MS = 10000;
 const CHAT_HISTORY_LIMIT = 50;
 
-// --- SOCKET.IO SERVER INITIALIZATION ---
+const isProd = process.env.NODE_ENV === "production";
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: isProd
+      ? "https://quizai.hizkiajonathan.com"
+      : "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-// --- MIDDLEWARE EXPRESS ---
 app.use(cookieParser());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(
+  cors({
+    origin: isProd
+      ? "https://quizai.hizkiajonathan.com"
+      : "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- API ROUTES ---
 app.use(routers);
 
-// --- GAME LOGIC & STATE (Di memori server) ---
 let players = {}; // { userId: { id, username, email, solved, role, sockets: new Set() } }
 let socketIdToUserId = {}; // { socketId: userId }
 
@@ -53,12 +59,13 @@ let isQuestionActive = false;
 let chatHistory = [];
 let votesForNewQuestion = new Set();
 
-// --- HELPER FUNCTION - AI QUESTION GENERATOR ---
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENAI_API_KEY,
   defaultHeaders: {
-    "HTTP-Referer": "http://localhost:5173",
+    "HTTP-Referer": isProd
+      ? "https://quizai.hizkiajonathan.com"
+      : "http://localhost:5173",
     "X-Title": "QuizRush.AI",
   },
 });
@@ -106,7 +113,6 @@ Do NOT include markdown, explanations, or any other extra text.
   }
 }
 
-// --- FUNGSI HELPER UNTUK GAME FLOW ---
 function resetVotes() {
   votesForNewQuestion.clear();
   io.emit("updateVoteCount", {
@@ -125,7 +131,6 @@ async function startNewRound() {
   io.emit("newQuestion", { question: currentQuestion.question });
 }
 
-// --- SOCKET.IO CONNECTION HANDLER ---
 io.on("connection", (socket) => {
   console.log(`🔌 User connected: ${socket.id}`);
 
@@ -185,7 +190,6 @@ io.on("connection", (socket) => {
       `Admin changed settings! Topic: ${gameSettings.topic}, Difficulty: ${gameSettings.rarity}`
     );
 
-    // [PERUBAHAN] Langsung mulai ronde baru dengan pengaturan yang baru
     console.log("🚀 Admin triggered a new round with new settings.");
     startNewRound();
   });
@@ -264,7 +268,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// --- CUSTOM ERROR HANDLER ---
 app.use((error, req, res, next) => {
   let code = 500;
   let message = "Internal Server Error";
