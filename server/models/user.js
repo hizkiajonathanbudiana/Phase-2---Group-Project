@@ -44,6 +44,11 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: false,
         allowNull: false,
       },
+      role: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "user",
+      },
     },
     {
       sequelize,
@@ -55,6 +60,7 @@ module.exports = (sequelize, DataTypes) => {
           } else {
             // Hash the password if provided
             user.password = await hashPassword(user.password);
+            user.username = user.username.toLowerCase(); // Normalize username to lowercase
           }
         },
         beforeUpdate: async (user, options) => {

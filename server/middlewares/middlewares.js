@@ -1,5 +1,5 @@
 const { verifyToken } = require("../helpers/jwt");
-const { User } = require("../models");
+const { User, Status } = require("../models");
 
 const protectorLogin = async (req, res, next) => {
   try {
@@ -17,6 +17,11 @@ const protectorLogin = async (req, res, next) => {
       where: {
         id: decoded.id,
       },
+      include: [
+        {
+          model: Status,
+        },
+      ],
     });
 
     if (!user) {
@@ -25,7 +30,11 @@ const protectorLogin = async (req, res, next) => {
 
     req.user = {
       id: user.id,
+      username: user.username,
       email: user.email,
+      isVerified: user.isVerified,
+      solved: user.Status?.solved || 0,
+      role: user.role || "user",
     };
     next();
   } catch (error) {

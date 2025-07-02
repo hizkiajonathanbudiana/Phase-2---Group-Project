@@ -1,243 +1,148 @@
-import { useState, useEffect } from "react";
-import { io } from "socket.io-client";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 
-// =================================================================
-// KONFIGURASI
-// =================================================================
-// Pastikan URL ini sesuai dengan alamat backend Anda
-const SOCKET_SERVER_URL = "http://localhost:3000";
+import LoginPage from "./pages/LoginPage";
+import HomePage from "./pages/HomePage";
+import VerifyPage from "./pages/VerifyPage";
+import SearchEmailPage from "./pages/SearchEmail";
+import RegisterPage from "./pages/RegisterPage";
+import VerifyPassPage from "./pages/VerifyPassPage";
 
-// Buat instance socket di luar komponen agar tidak dibuat ulang setiap render
-const socket = io(SOCKET_SERVER_URL, {
-  autoConnect: false, // Kita akan connect secara manual setelah user "login"
-});
+import { fetchUser } from "./features/appSlice";
+import { SocketProvider } from "./contexts/SocketContext";
 
-// =================================================================
-// KOMPONEN UTAMA
-// =================================================================
-export default function App() {
-  // State untuk status koneksi dan game
-  const [isConnected, setIsConnected] = useState(socket.connected);
-  const [user, setUser] = useState(null); // Menyimpan data user setelah "login"
+function App() {
+  const dispatch = useDispatch();
+  // Get the loading and isAuthenticated states from the Redux store
+  const { isAuthenticated, loading } = useSelector((state) => state.app);
 
-  // State untuk data dari server
-  const [currentQuestion, setCurrentQuestion] = useState("");
-  const [notification, setNotification] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
-  const [onlinePlayers, setOnlinePlayers] = useState([]);
-
-  // State untuk input user
-  const [answer, setAnswer] = useState("");
-
-  // Efek untuk menangani event dari Socket.IO
   useEffect(() => {
-    function onConnect() {
-      console.log("✅ Terhubung ke server socket!");
-      setIsConnected(true);
-    }
+    // This will attempt to fetch the user based on the cookie/token
+    // on the initial application load.
+    dispatch(fetchUser());
+  }, [dispatch]); // dispatch is stable, so this effect runs once on mount
 
-    function onDisconnect() {
-      console.log("❌ Terputus dari server socket!");
-      setIsConnected(false);
-    }
-
-    // Listener untuk menerima soal baru
-    function onNewQuestion({ question }) {
-      console.log("❓ Soal baru:", question);
-      setCurrentQuestion(question);
-      setNotification(""); // Hapus notifikasi ronde sebelumnya
-    }
-
-    // Listener saat soal terjawab
-    function onQuestionAnswered({ winnerName, answer }) {
-      console.log(`🎉 Soal terjawab oleh ${winnerName}! Jawaban: ${answer}`);
-      setCurrentQuestion(""); // Kosongkan soal
-      setNotification(
-        `Jawaban benar oleh ${winnerName}! Jawabannya: ${answer}. Ronde baru dalam 10 detik...`
-      );
-    }
-
-    // Listener untuk pesan chat baru (jawaban salah)
-    function onNewChatMessage(message) {
-      console.log("💬 Pesan baru:", message);
-      setChatHistory((prevHistory) => [...prevHistory, message]);
-    }
-
-    // Listener untuk menerima seluruh history chat saat join
-    function onChatHistory(history) {
-      console.log("📜 Menerima history chat:", history);
-      setChatHistory(history);
-    }
-
-    // Listener untuk update daftar pemain online
-    function onUpdatePlayerList(players) {
-      console.log("👥 Update daftar pemain:", players);
-      setOnlinePlayers(players);
-    }
-
-    // Daftarkan semua event listener
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("newQuestion", onNewQuestion);
-    socket.on("questionAnswered", onQuestionAnswered);
-    socket.on("newChatMessage", onNewChatMessage);
-    socket.on("chatHistory", onChatHistory);
-    socket.on("updatePlayerList", onUpdatePlayerList);
-
-    // Cleanup function: hapus semua listener saat komponen unmount
-    return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("newQuestion", onNewQuestion);
-      socket.off("questionAnswered", onQuestionAnswered);
-      socket.off("newChatMessage", onNewChatMessage);
-      socket.off("chatHistory", onChatHistory);
-      socket.off("updatePlayerList", onUpdatePlayerList);
-    };
-  }, []);
-
-  // Handler untuk "Login" & Join Game
-  const handleJoinGame = () => {
-    // Di aplikasi nyata, data ini didapat setelah login/register via API
-    // Untuk testing, kita buat data dummy
-    const dummyUser = {
-      id: Math.floor(Math.random() * 1000), // Dummy user ID dari DB
-      username: `Player${Math.floor(Math.random() * 100)}`,
-      email: `player${Math.floor(Math.random() * 100)}@test.com`,
-    };
-    setUser(dummyUser);
-
-    // Connect ke socket server
-    socket.connect();
-
-    // Kirim event 'joinGame' dengan data user
-    // Event ini harus dikirim setelah koneksi berhasil terbentuk
-    socket.on("connect", () => {
-      socket.emit("joinGame", dummyUser);
-      // Hapus listener connect ini agar tidak dipanggil berulang kali
-      socket.off("connect");
-    });
-  };
-
-  // Handler untuk submit jawaban
-  const handleAnswerSubmit = (e) => {
-    e.preventDefault();
-    if (answer.trim() && isConnected) {
-      socket.emit("submitAnswer", { answer });
-      setAnswer(""); // Kosongkan input field setelah submit
-    }
-  };
-
-  // Tampilan UI
-  if (!user) {
+  // While the initial user fetch is happening, show a loading indicator.
+  // This is the key to preventing rendering with incomplete data.
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">QuizRush.AI</h1>
-          <button
-            onClick={handleJoinGame}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-xl font-semibold transition-colors"
-          >
-            Join Game
-          </button>
-        </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <h2>Loading...</h2>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <header className="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
-          <div>
-            <h1 className="text-3xl font-bold text-indigo-400">QuizRush.AI</h1>
-            <p className="text-gray-400">
-              Welcome,{" "}
-              <span className="font-semibold text-white">{user.username}</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="font-semibold">
-              Status:
-              <span className={isConnected ? "text-green-400" : "text-red-400"}>
-                {isConnected ? " Connected" : " Disconnected"}
-              </span>
-            </p>
-          </div>
-        </header>
+    <>
+      <ToastContainer />
+      <Routes>
+        {/* If the user is authenticated, trying to access login/register will redirect to home */}
+        <Route
+          path="/"
+          element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" />}
+        />
+        <Route
+          path="/register"
+          element={
+            !isAuthenticated ? <RegisterPage /> : <Navigate to="/home" />
+          }
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Kolom Utama (Game) */}
-          <main className="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
-            {/* Area Notifikasi */}
-            {notification && (
-              <div className="bg-yellow-500/20 border border-yellow-400 text-yellow-300 px-4 py-3 rounded-lg mb-4 text-center">
-                <p>{notification}</p>
-              </div>
-            )}
+        {/* Publicly accessible routes for password reset */}
+        <Route path="/email/search" element={<SearchEmailPage />} />
+        <Route path="/email/verify" element={<VerifyPassPage />} />
 
-            {/* Area Soal */}
-            <div className="mb-6 text-center bg-gray-900 p-6 rounded-lg min-h-[150px] flex items-center justify-center">
-              {currentQuestion ? (
-                <p className="text-2xl lg:text-3xl font-semibold leading-relaxed">
-                  {currentQuestion}
-                </p>
-              ) : (
-                <p className="text-xl text-gray-500">
-                  Waiting for the next question...
-                </p>
-              )}
-            </div>
+        {/* This route can be accessed by an authenticated user who is not yet verified */}
+        <Route
+          path="/verify"
+          element={isAuthenticated ? <VerifyPage /> : <Navigate to="/" />}
+        />
 
-            {/* Form Jawaban */}
-            <form onSubmit={handleAnswerSubmit}>
-              <input
-                type="text"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Type your answer here and press Enter..."
-                className="w-full p-4 bg-gray-700 border border-gray-600 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                disabled={!isConnected || !currentQuestion}
-              />
-            </form>
-          </main>
+        {/* This is the protected route. It will only render HomePage if the user is authenticated. */}
+        <Route
+          path="/home"
+          element={
+            isAuthenticated ? (
+              <SocketProvider>
+                <HomePage />
+              </SocketProvider>
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
 
-          {/* Kolom Samping (Chat & Players) */}
-          <aside className="space-y-6">
-            {/* Daftar Pemain */}
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4 border-b border-gray-700 pb-2">
-                Online Players ({onlinePlayers.length})
-              </h2>
-              <ul className="space-y-2 max-h-40 overflow-y-auto">
-                {onlinePlayers.map((player, index) => (
-                  <li key={index} className="text-gray-300">
-                    {player.username}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Live Chat */}
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold mb-4 border-b border-gray-700 pb-2">
-                Live Chat (Wrong Answers)
-              </h2>
-              <div className="space-y-3 h-64 overflow-y-auto pr-2">
-                {chatHistory.map((chat, index) => (
-                  <div key={index}>
-                    <span className="font-bold text-indigo-400">
-                      {chat.username}:{" "}
-                    </span>
-                    <span className="text-gray-300">{chat.message}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </aside>
-        </div>
-      </div>
-    </div>
+        {/* A catch-all route to redirect any unknown paths */}
+        <Route
+          path="*"
+          element={<Navigate to={isAuthenticated ? "/home" : "/"} />}
+        />
+      </Routes>
+    </>
   );
 }
+
+export default App;
+
+// import { useEffect } from "react";
+// import { useSelector } from "react-redux";
+// import { useDispatch } from "react-redux";
+// import { ToastContainer } from "react-toastify";
+// import { Routes, Route, Navigate } from "react-router";
+
+// import LoginPage from "./pages/LoginPage";
+// import HomePage from "./pages/HomePage";
+// import VerifyPage from "./pages/VerifyPage";
+// import SearchEmailPage from "./pages/SearchEmail";
+// import RegisterPage from "./pages/RegisterPage";
+// import { fetchUser } from "./features/appSlice";
+// import VerifyPassPage from "./pages/VerifyPassPage";
+
+// import { SocketProvider } from "./contexts/SocketContext";
+
+// function App() {
+//   const dispatch = useDispatch();
+//   const { isAuthenticated } = useSelector((state) => state.app);
+
+//   useEffect(() => {
+//     dispatch(fetchUser());
+//   }, []);
+
+//   return (
+//     <>
+//       <ToastContainer />
+//       <Routes>
+//         {/* {!isAuthenticated ? (
+//           <> */}
+//         <Route path="/" element={<LoginPage />} />
+//         <Route path="/register" element={<RegisterPage />} />
+//         <Route path="/verify" element={<VerifyPage />} />
+//         <Route path="/email/search" element={<SearchEmailPage />} />
+//         <Route path="/email/verify" element={<VerifyPassPage />} />
+//         {/* </>
+//         ) : ( */}
+//         <Route
+//           path="/home"
+//           element={
+//             <SocketProvider>
+//               <HomePage />
+//             </SocketProvider>
+//           }
+//         />
+//         {/* )} */}
+//         <Route path="*" element={<Navigate to="/" replace />} />
+//       </Routes>
+//     </>
+//   );
+// }
+
+// export default App;
