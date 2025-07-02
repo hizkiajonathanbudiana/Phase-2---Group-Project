@@ -1,27 +1,43 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import VerifyPage from "./pages/VerifyPage";
-import SearchEmailPage from "./pages/SearchEmail";
+import SearchEmailPage from "./pages/SearchEmailPage";
 import RegisterPage from "./pages/RegisterPage";
 import VerifyPassPage from "./pages/VerifyPassPage";
+import RankPage from "./pages/RankPage";
 
-import { fetchUser } from "./features/authSlice";
 import { SocketProvider } from "./contexts/SocketContext";
+import { fetchUser } from "./features/appSlice";
+
+const ProtectedRoute = () => {
+  const { isAuthenticated } = useSelector((state) => state.app);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <SocketProvider>
+      <Outlet />
+    </SocketProvider>
+  );
+};
 
 function App() {
   const dispatch = useDispatch();
-  const { isAuthenticated, loading } = useSelector((state) => state.app);
+
+  const { isAuthenticated, isInitializing } = useSelector((state) => state.app);
 
   useEffect(() => {
     dispatch(fetchUser());
   }, [dispatch]);
 
-  if (loading) {
+  if (isInitializing) {
     return (
       <div
         style={{
@@ -29,16 +45,19 @@ function App() {
           justifyContent: "center",
           alignItems: "center",
           height: "100vh",
+          backgroundColor: "#1c1c2b",
+          color: "white",
+          fontFamily: "sans-serif",
         }}
       >
-        <h2>Loading...</h2>
+        <h2>Initializing Session...</h2>
       </div>
     );
   }
 
   return (
     <>
-      <ToastContainer />
+      <ToastContainer theme="dark" />
       <Routes>
         <Route
           path="/"
@@ -50,27 +69,24 @@ function App() {
             !isAuthenticated ? <RegisterPage /> : <Navigate to="/home" />
           }
         />
-
-        <Route path="/email/search" element={<SearchEmailPage />} />
-        <Route path="/password/verify" element={<VerifyPassPage />} />
-
         <Route
-          path="/verify"
-          element={isAuthenticated ? <VerifyPage /> : <Navigate to="/" />}
-        />
-
-        <Route
-          path="/home"
+          path="/email/search"
           element={
-            isAuthenticated ? (
-              <SocketProvider>
-                <HomePage />
-              </SocketProvider>
-            ) : (
-              <Navigate to="/" />
-            )
+            !isAuthenticated ? <SearchEmailPage /> : <Navigate to="/home" />
           }
         />
+        <Route
+          path="/password/verify"
+          element={
+            !isAuthenticated ? <VerifyPassPage /> : <Navigate to="/home" />
+          }
+        />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/rank" element={<RankPage />} />
+          <Route path="/verify" element={<VerifyPage />} />
+        </Route>
 
         <Route
           path="*"

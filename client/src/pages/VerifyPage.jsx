@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 import { handleVerifyCode, sendVerificationCode } from "../features/authSlice";
 
@@ -9,20 +9,28 @@ export default function VerifyPage() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
+
+  const { isAuthenticated } = useSelector((state) => state.app);
+  const { isSubmitting } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login");
-    } else {
+    if (isAuthenticated) {
       dispatch(sendVerificationCode());
+    } else {
+      navigate("/login", { replace: true });
     }
   }, [isAuthenticated, navigate, dispatch]);
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (isLoading) return;
-    dispatch(handleVerifyCode({ verifyCode }));
+    if (isSubmitting) return;
+
+    try {
+      await dispatch(handleVerifyCode({ verifyCode })).unwrap();
+      navigate("/home");
+    } catch (error) {
+      console.error("Error verifying code:", error);
+    }
   };
 
   return (
@@ -51,22 +59,24 @@ export default function VerifyPage() {
               />
             </div>
 
+            {/* 3. Tombol diubah untuk menggunakan isSubmitting */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white font-bold shadow-[0_4px_20px_rgba(255,0,255,0.4)] hover:brightness-125 transition duration-300 disabled:opacity-50"
             >
-              {isLoading ? "Verifying..." : "Verify Code"}
+              {isSubmitting ? "Verifying..." : "Verify Code"}
             </button>
           </form>
 
           <div className="text-center mt-4">
-            <a
-              href="/login"
+            {/* 4. Menggunakan Link component untuk navigasi SPA yang benar */}
+            <Link
+              to="/login"
               className="text-sm text-cyan-400 hover:underline hover:text-cyan-300 transition"
             >
               ← Back to Login
-            </a>
+            </Link>
           </div>
         </div>
       </div>

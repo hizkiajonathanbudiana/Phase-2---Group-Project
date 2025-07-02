@@ -42,7 +42,6 @@ app.use(routers);
 let players = {}; // { userId: { id, username, email, solved, role, sockets: new Set() } }
 let socketIdToUserId = {}; // { socketId: userId }
 
-// [FITUR ADMIN] State untuk menyimpan pengaturan AI
 let gameSettings = {
   language: "English",
   rarity: "uncommon",
@@ -64,9 +63,7 @@ const openai = new OpenAI({
   },
 });
 
-// [FITUR ADMIN] Fungsi ini sekarang dinamis berdasarkan gameSettings
 async function generateQuizQuestion() {
-  // Ambil pengaturan terbaru dari state server
   const { language, rarity, topic } = gameSettings;
   console.log(
     `Generating new question with settings: ${topic} | ${rarity} | ${language}`
@@ -132,7 +129,6 @@ async function startNewRound() {
 io.on("connection", (socket) => {
   console.log(`🔌 User connected: ${socket.id}`);
 
-  // 1. Saat player bergabung (sekarang juga membawa 'role')
   socket.on("joinGame", async ({ id, username, email, solved, role }) => {
     if (players[id]) {
       players[id].sockets.add(socket.id);
@@ -142,7 +138,7 @@ io.on("connection", (socket) => {
         username,
         email,
         solved,
-        role: role || "player", // Simpan role, default ke 'player' jika tidak ada
+        role: role || "player",
         sockets: new Set([socket.id]),
       };
       console.log(
@@ -150,16 +146,12 @@ io.on("connection", (socket) => {
       );
     }
     socketIdToUserId[socket.id] = id;
-
-    // Kirim state game awal ke client yang baru join
-    socket.emit("gameSettingsUpdated", gameSettings); // Kirim setting saat ini
-
+    socket.emit("gameSettingsUpdated", gameSettings);
     io.emit("updatePlayerList", Object.values(players));
     io.emit("updateVoteCount", {
       currentVotes: votesForNewQuestion.size,
       totalPlayers: Object.keys(players).length,
     });
-
     if (isQuestionActive) {
       socket.emit("newQuestion", { question: currentQuestion.question });
     }
@@ -168,37 +160,35 @@ io.on("connection", (socket) => {
     }
   });
 
-  // [FITUR ADMIN] Event untuk admin mengubah pengaturan
   socket.on("adminUpdateSettings", (newSettings) => {
     const userId = socketIdToUserId[socket.id];
     const player = players[userId];
 
-    // Keamanan: Pastikan hanya admin yang bisa menjalankan perintah ini
     if (!player || player.role !== "admin") {
       console.warn(
         `SECURITY: Non-admin user ${player?.username || "Unknown"} (${
           socket.id
         }) tried to change settings.`
       );
-      return; // Hentikan eksekusi jika bukan admin
+      return;
     }
 
-    // Update state settings di server
     gameSettings = { ...gameSettings, ...newSettings };
     console.log(
       `🔧 ADMIN ACTION: Settings updated by ${player.username}`,
       gameSettings
     );
 
-    // Broadcast pengaturan baru ke SEMUA client agar UI mereka bisa update
     io.emit("gameSettingsUpdated", gameSettings);
     io.emit(
       "gameNotification",
       `Admin changed settings! Topic: ${gameSettings.topic}, Difficulty: ${gameSettings.rarity}`
     );
-  });
 
-  // ... (event submitAnswer, voteNewQuestion, dan disconnect tetap sama)
+    // [PERUBAHAN] Langsung mulai ronde baru dengan pengaturan yang baru
+    console.log("🚀 Admin triggered a new round with new settings.");
+    startNewRound();
+  });
 
   socket.on("submitAnswer", async ({ answer }) => {
     const userId = socketIdToUserId[socket.id];

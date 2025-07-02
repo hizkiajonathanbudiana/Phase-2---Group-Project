@@ -1,14 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useSocket } from "../contexts/SocketContext";
-import { logoutUser } from "../features/appSlice";
 
-// Komponen Panel Admin yang terpisah untuk kebersihan kode
+import { logoutUser } from "../features/authSlice";
+
 const AdminControlPanel = () => {
   const { gameSettings, adminUpdateSettings } = useSocket();
   const [settings, setSettings] = useState(gameSettings);
 
-  // Effect ini akan menyinkronkan state form jika pengaturan global berubah
   useEffect(() => {
     setSettings(gameSettings);
   }, [gameSettings]);
@@ -113,7 +112,7 @@ export default function HomePage() {
     submitAnswer,
     voteState,
     voteForNewQuestion,
-    gameSettings, // Ambil pengaturan game untuk ditampilkan
+    gameSettings,
   } = socketContext;
 
   const [answer, setAnswer] = useState("");
@@ -209,10 +208,8 @@ export default function HomePage() {
           </main>
 
           <aside className="space-y-6">
-            {/* Panel Admin hanya muncul jika user adalah admin */}
             {user?.role === "admin" && <AdminControlPanel />}
 
-            {/* Panel Info Game untuk semua pemain */}
             <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
               <h2 className="text-xl font-bold mb-3 border-b border-gray-700 pb-2">
                 Game Info

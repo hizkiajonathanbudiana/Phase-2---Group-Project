@@ -12,7 +12,9 @@ export default function LoginPage() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
+
+  const { isAuthenticated } = useSelector((state) => state.app);
+  const { isSubmitting } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -20,15 +22,10 @@ export default function LoginPage() {
     }
   }, [navigate, isAuthenticated]);
 
-  const handleFormSubmit = async (e) => {
-    try {
-      e.preventDefault();
-      if (isLoading) return;
-      await dispatch(loginUser({ email, password }));
-      navigate("/home");
-    } catch (error) {
-      console.error("Error logging in:", error);
-    }
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    dispatch(loginUser({ email, password }));
   };
 
   const handleGoogleSuccess = (res) => {
@@ -77,13 +74,13 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Submit Button */}
+            {/* 3. Tombol diubah untuk menggunakan isSubmitting */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white font-bold shadow-[0_4px_20px_rgba(255,0,255,0.4)] hover:brightness-125 transition duration-300 disabled:opacity-50"
             >
-              {isLoading ? "Logging in..." : "Enter the Arena"}
+              {isSubmitting ? "Logging in..." : "Enter the Arena"}
             </button>
 
             <div className="text-center mt-2">

@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
+
 import { searchEmail } from "../features/authSlice";
 
 export default function SearchEmailPage() {
   const [email, setEmail] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isLoading } = useSelector((state) => state.auth);
+
+  const { isSubmitting } = useSelector((state) => state.auth);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isSubmitting) return;
     try {
-      await dispatch(searchEmail({ email }));
+      await dispatch(searchEmail({ email })).unwrap();
       navigate("/password/verify");
     } catch (error) {
       console.error("Error searching email:", error);
@@ -45,12 +47,13 @@ export default function SearchEmailPage() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-600 bg-[#2a2a40] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 shadow-inner text-sm"
               />
             </div>
+            {/* 3. Tombol diubah untuk menggunakan isSubmitting */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white font-bold shadow-[0_4px_20px_rgba(255,0,255,0.4)] hover:brightness-125 transition duration-300 disabled:opacity-50"
             >
-              {isLoading ? "Sending Code..." : "Send Reset Code"}
+              {isSubmitting ? "Sending Code..." : "Send Reset Code"}
             </button>
           </form>
 

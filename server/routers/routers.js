@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
+const statusController = require("../controllers/statusController");
 const userController = require("../controllers/userController");
 const aiController = require("../controllers/aiController.js");
 const {
@@ -42,6 +43,7 @@ router.get("/auth/me", (req, res) => {
     username: req.user.username,
     email: req.user.email,
     isVerified: req.user.isVerified,
+    role: req.user.role || "user",
   });
 });
 
@@ -60,6 +62,8 @@ router.post("/verify", userController.verifyCodeHandler);
 router.post("/verify/send", userController.sendVerificationEmail);
 
 router.use(protectorVerify);
+
+router.get("/status", statusController.getStatus);
 
 router.post("/ai", aiController.generateChat);
 

@@ -1,30 +1,33 @@
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import { io } from "socket.io-client";
 import { useSelector } from "react-redux";
 
 const SocketContext = createContext();
-// Pastikan URL ini sesuai dengan alamat server backend Anda
 const SOCKET_SERVER_URL = "http://localhost:3000";
 
 export function SocketProvider({ children }) {
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.app);
 
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  // State untuk Game
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [notification, setNotification] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [onlinePlayers, setOnlinePlayers] = useState([]);
 
-  // State untuk melacak status voting
   const [voteState, setVoteState] = useState({
     currentVotes: 0,
     totalPlayers: 0,
   });
 
-  // [FITUR ADMIN] State untuk menyimpan pengaturan game dari server
   const [gameSettings, setGameSettings] = useState({
     language: "English",
     rarity: "uncommon",
@@ -32,21 +35,18 @@ export function SocketProvider({ children }) {
   });
 
   useEffect(() => {
-    // Hanya jalankan jika ada user yang login
     if (user) {
       const newSocket = io(SOCKET_SERVER_URL);
       setSocket(newSocket);
 
-      // --- EVENT HANDLERS UTAMA ---
       newSocket.on("connect", () => {
         setIsConnected(true);
-        // Kirim data user ke server, termasuk 'role'
         newSocket.emit("joinGame", {
           id: user.id,
           username: user.username,
           email: user.email,
           solved: user.solved,
-          role: user.role || "player", // Mengirim role user
+          role: user.role || "player",
         });
       });
 
@@ -54,7 +54,6 @@ export function SocketProvider({ children }) {
         setIsConnected(false);
       });
 
-      // --- EVENT HANDLERS GAMEPLAY ---
       newSocket.on("newQuestion", ({ question }) => {
         setCurrentQuestion(question);
         setNotification("");
@@ -75,7 +74,6 @@ export function SocketProvider({ children }) {
         setOnlinePlayers(players);
       });
 
-      // --- EVENT HANDLERS VOTING ---
       newSocket.on("updateVoteCount", ({ currentVotes, totalPlayers }) => {
         setVoteState({ currentVotes, totalPlayers });
       });
@@ -84,12 +82,10 @@ export function SocketProvider({ children }) {
         setNotification(message);
       });
 
-      // [FITUR ADMIN] Listener untuk update pengaturan game dari server
       newSocket.on("gameSettingsUpdated", (settings) => {
         setGameSettings(settings);
       });
 
-      // Cleanup function
       return () => {
         newSocket.disconnect();
       };
@@ -97,29 +93,33 @@ export function SocketProvider({ children }) {
       socket.disconnect();
       setSocket(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // --- FUNGSI AKSI YANG DIKIRIM KE KOMPONEN LAIN ---
-  const submitAnswer = (answer) => {
-    if (socket) {
-      socket.emit("submitAnswer", { answer });
-    }
-  };
+  const submitAnswer = useCallback(
+    (answer) => {
+      if (socket) {
+        socket.emit("submitAnswer", { answer });
+      }
+    },
+    [socket]
+  ); // Dependency-nya adalah 'socket'
 
-  const voteForNewQuestion = () => {
+  const voteForNewQuestion = useCallback(() => {
     if (socket) {
       socket.emit("voteNewQuestion");
     }
-  };
+  }, [socket]);
 
-  // [FITUR ADMIN] Fungsi untuk admin mengirim update pengaturan
-  const adminUpdateSettings = (settings) => {
-    if (socket) {
-      socket.emit("adminUpdateSettings", settings);
-    }
-  };
+  const adminUpdateSettings = useCallback(
+    (settings) => {
+      if (socket) {
+        socket.emit("adminUpdateSettings", settings);
+      }
+    },
+    [socket]
+  );
 
+  // 3. Gunakan useMemo untuk mengoptimalkan nilai context
   const value = useMemo(
     () => ({
       isConnected,
@@ -127,12 +127,14 @@ export function SocketProvider({ children }) {
       notification,
       chatHistory,
       onlinePlayers,
-      submitAnswer,
       voteState,
+      gameSettings,
+      // Masukkan fungsi yang sudah di-memoize
+      submitAnswer,
       voteForNewQuestion,
-      gameSettings, // Menyediakan state pengaturan
-      adminUpdateSettings, // Menyediakan fungsi untuk admin
+      adminUpdateSettings,
     }),
+    //  fungsi ke dependency array dari useMemo
     [
       isConnected,
       currentQuestion,
@@ -140,7 +142,10 @@ export function SocketProvider({ children }) {
       chatHistory,
       onlinePlayers,
       voteState,
-      gameSettings, // Tambahkan sebagai dependency
+      gameSettings,
+      submitAnswer,
+      voteForNewQuestion,
+      adminUpdateSettings,
     ]
   );
 
@@ -149,5 +154,4 @@ export function SocketProvider({ children }) {
   );
 }
 
-// Custom hook untuk mempermudah penggunaan context
 export const useSocket = () => useContext(SocketContext);
