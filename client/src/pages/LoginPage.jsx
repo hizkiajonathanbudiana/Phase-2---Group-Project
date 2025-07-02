@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/verify");
+      navigate("/home");
     }
   }, [isAuthenticated, navigate]);
 
@@ -107,6 +107,17 @@ export default function LoginPage() {
               shape="pill"
               size="large"
             />
+          </div>
+
+          {/* Register Redirect */}
+          <div className="text-center text-sm mt-4 text-gray-400">
+            Don’t have an account?{" "}
+            <Link
+              to="/register"
+              className="text-cyan-400 hover:underline hover:text-cyan-300 font-medium"
+            >
+              Register now
+            </Link>
           </div>
         </div>
       </div>
