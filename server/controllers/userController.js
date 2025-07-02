@@ -34,7 +34,10 @@ class userController {
             </div> `,
       };
 
-      const jwtToken = generateToken({ id, email, verifyCode }, "1h");
+      const jwtToken = generateToken(
+        { id: user.id, email: user.email, verifyCode },
+        "1h"
+      );
 
       res.cookie("weiVerifyCode", jwtToken, {
         httpOnly: true,
@@ -76,10 +79,15 @@ class userController {
       }
       console.log("VERIFICATION CODE MATCHES");
 
-      await User.update(
-        { isVerified: true, password: password },
-        { where: { id: decoded.id } }
-      );
+      // await User.update(
+      //   { isVerified: true, password: password },
+      //   { where: { id: decoded.id } }
+      // );
+      const user = await User.findByPk(decoded.id);
+      user.isVerified = true;
+      user.password = password; // <-- ini bakal ke-hash via beforeUpdate
+      await user.save();
+
       res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
       next(error);
@@ -106,6 +114,9 @@ class userController {
       }
       console.log("VERIFICATION CODE MATCHES");
       await User.update({ isVerified: true }, { where: { id: decoded.id } });
+
+      req.user.isVerified = true; // Update the user's verification status in the request object
+
       res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
       next(error);
@@ -132,7 +143,10 @@ class userController {
             </div> `,
       };
 
-      const jwtToken = generateToken({ id, email, verifyCode }, "1h");
+      const jwtToken = generateToken(
+        { id, email, verifyCode },
+        "1h"
+      );
 
       res.cookie("weiVerifyCode", jwtToken, {
         httpOnly: true,
@@ -171,13 +185,7 @@ class userController {
 
       let user = await User.findOne({ where: { email } });
       if (!user) {
-        user = await User.create({
-          email,
-          googleSub,
-          provider: "google",
-          password: null,
-          isVerified: true, // Set to true for Google users
-        });
+        throw new Error("REGISTERFIRST");
       } else if (!user.googleSub) {
         user.googleSub = googleSub;
         user.provider = "google";
@@ -194,7 +202,12 @@ class userController {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res.json({ token: jwtToken, access_token: jwtToken });
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        isVerified: user.isVerified,
+      });
     } catch (error) {
       next(error);
     }
@@ -242,7 +255,12 @@ class userController {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      res.json({ token: jwtToken, access_token: jwtToken });
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        isVerified: user.isVerified,
+      });
     } catch (error) {
       next(error);
     }

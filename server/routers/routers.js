@@ -29,9 +29,9 @@ router.post("/login", userController.loginHandler);
 router.post("/register", userController.registerHandler);
 router.post("/google", userController.googleLogin);
 
-router.post("/forgot-password", userController.ForgotPasswordHandler);
+router.post("/password/forgot", userController.ForgotPasswordHandler);
 
-router.post("/reset-password", userController.resetPasswordHandler);
+router.post("/password/reset", userController.resetPasswordHandler);
 
 console.log("masuk ke router verify");
 
@@ -39,7 +39,9 @@ router.use(protectorLogin);
 router.get("/auth/me", (req, res) => {
   res.status(200).json({
     id: req.user.id,
+    username: req.user.username,
     email: req.user.email,
+    isVerified: req.user.isVerified,
   });
 });
 
