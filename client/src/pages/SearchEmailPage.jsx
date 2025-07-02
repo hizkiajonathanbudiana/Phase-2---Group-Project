@@ -14,7 +14,7 @@ export default function SearchEmailPage() {
     if (isLoading) return;
     try {
       await dispatch(searchEmail({ email }));
-      navigate("/verify/pass");
+      navigate("/password/verify");
     } catch (error) {
       console.error("Error searching email:", error);
     }

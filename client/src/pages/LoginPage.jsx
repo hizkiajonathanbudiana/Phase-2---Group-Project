@@ -16,14 +16,19 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/home");
+      navigate("/home", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [navigate, isAuthenticated]);
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    if (isLoading) return;
-    dispatch(loginUser({ email, password }));
+  const handleFormSubmit = async (e) => {
+    try {
+      e.preventDefault();
+      if (isLoading) return;
+      await dispatch(loginUser({ email, password }));
+      navigate("/home");
+    } catch (error) {
+      console.error("Error logging in:", error);
+    }
   };
 
   const handleGoogleSuccess = (res) => {
@@ -42,7 +47,7 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <h1 className="text-4xl font-extrabold text-center drop-shadow-xl text-white tracking-widest">
-            🚀 Quiz Arena
+            🚀 QuizRush.AI
           </h1>
           <p className="text-center text-sm text-gray-300 mt-2 tracking-wide">
             Login to enter the real-time quiz battle!
