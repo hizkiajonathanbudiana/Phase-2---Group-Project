@@ -7,7 +7,7 @@ const SocketContext = createContext();
 const SOCKET_SERVER_URL = "http://localhost:3000";
 
 export function SocketProvider({ children }) {
-  const { user } = useSelector((state) => state.app);
+  const { user } = useSelector((state) => state.auth);
 
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);

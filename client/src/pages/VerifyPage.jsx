@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
-import { handleVerifyCode, sendVerificationCode } from "../features/appSlice";
+import { handleVerifyCode, sendVerificationCode } from "../features/authSlice";
 
 export default function VerifyPage() {
   const [verifyCode, setVerifyCode] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.app);
+  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -26,24 +26,50 @@ export default function VerifyPage() {
   };
 
   return (
-    <>
-      <main>
-        <form onSubmit={handleFormSubmit}>
-          <div>
-            <div></div>
-            <input
-              type="text"
-              placeholder="code"
-              value={verifyCode}
-              onChange={(e) => setVerifyCode(e.target.value)}
-            />
-          </div>
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] px-4 py-8 font-orbitron text-white">
+      <div className="w-full max-w-md bg-[#1c1c2b] rounded-3xl shadow-[0_0_30px_rgba(128,0,255,0.4)] p-8 space-y-6 border border-purple-800 relative overflow-hidden">
+        {/* Glow effect */}
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-fuchsia-500 to-cyan-500 rounded-3xl blur-[40px] opacity-20 z-0"></div>
 
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Verifying..." : "Verify"}
-          </button>
-        </form>
-      </main>
-    </>
+        <div className="relative z-10">
+          <h2 className="text-4xl font-extrabold text-center drop-shadow-xl tracking-wide text-white">
+            🔐 Verification
+          </h2>
+          <p className="text-sm text-center text-gray-300 mt-2 tracking-wide">
+            Enter the 6-digit code sent to your email
+          </p>
+
+          <form onSubmit={handleFormSubmit} className="space-y-4 mt-6">
+            <div>
+              <input
+                type="text"
+                placeholder="Enter verification code"
+                value={verifyCode}
+                onChange={(e) => setVerifyCode(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-600 bg-[#2a2a40] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 shadow-inner text-sm tracking-widest text-center uppercase"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white font-bold shadow-[0_4px_20px_rgba(255,0,255,0.4)] hover:brightness-125 transition duration-300 disabled:opacity-50"
+            >
+              {isLoading ? "Verifying..." : "Verify Code"}
+            </button>
+          </form>
+
+          <div className="text-center mt-4">
+            <a
+              href="/login"
+              className="text-sm text-cyan-400 hover:underline hover:text-cyan-300 transition"
+            >
+              ← Back to Login
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

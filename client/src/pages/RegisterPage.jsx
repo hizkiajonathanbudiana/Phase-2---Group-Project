@@ -1,68 +1,102 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { registerUser } from "../features/authSlice";
 
-import { registerUser } from "../features/appSlice";
-
-export default function LoginPage() {
+export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.app);
+  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      navigate("/home");
     }
   }, [isAuthenticated, navigate]);
 
   const handleFormSubmit = (e) => {
-    e.preventDefault();
-    if (isLoading) return;
-    dispatch(registerUser({ username, email, password }));
+    try {
+      e.preventDefault();
+      if (isLoading) return;
+      dispatch(registerUser({ username, email, password }));
+      navigate("/login");
+    } catch (error) {
+      console.error("Error registering user:", error);
+    }
   };
 
   return (
-    <>
-      <main>
-        <form onSubmit={handleFormSubmit}>
-          <div>
-            <div></div>
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div>
-            <div></div>
-            <input
-              type="text"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] px-4 py-8 font-orbitron text-white">
+      <div className="w-full max-w-md bg-[#1c1c2b] rounded-3xl shadow-[0_0_30px_rgba(128,0,255,0.4)] p-8 space-y-6 border border-purple-800 relative overflow-hidden">
+        {/* Glow background layer */}
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-fuchsia-500 to-cyan-500 rounded-3xl blur-[40px] opacity-20 z-0"></div>
 
-          <div>
-            <div></div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-extrabold text-center drop-shadow-xl text-white tracking-widest">
+            🔐 Register Now!
+          </h1>
+          <p className="text-center text-sm text-gray-300 mt-2 tracking-wide">
+            Create your quiz battle account
+          </p>
 
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Registering..." : "Register"}
-          </button>
-        </form>
-      </main>
-    </>
+          {/* Form */}
+          <form onSubmit={handleFormSubmit} className="space-y-4 mt-6">
+            {/* Username */}
+            <div>
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-600 bg-[#2a2a40] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 shadow-inner text-sm"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <input
+                type="text"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-600 bg-[#2a2a40] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 shadow-inner text-sm"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-600 bg-[#2a2a40] text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 shadow-inner text-sm"
+              />
+            </div>
+
+            {/* Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white font-bold shadow-[0_4px_20px_rgba(255,0,255,0.4)] hover:brightness-125 transition duration-300 disabled:opacity-50"
+            >
+              {isLoading ? "Registering..." : "Register"}
+            </button>
+            <div className="text-center mt-4">
+              <Link
+                href="/login"
+                className="text-sm text-cyan-400 hover:underline hover:text-cyan-300 transition"
+              >
+                ← Back to Login
+              </Link>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
   );
 }
