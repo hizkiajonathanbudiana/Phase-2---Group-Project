@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
-import { handleVerifyCode, sendVerificationCode } from "../features/appSlice";
+import { handleVerifyCode, sendVerificationCode } from "../features/authSlice";
 
 export default function VerifyPage() {
   const [verifyCode, setVerifyCode] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.app);
+  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (!isAuthenticated) {

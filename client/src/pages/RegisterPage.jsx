@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
-import { registerUser } from "../features/appSlice";
+import { registerUser } from "../features/authSlice";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -11,7 +11,7 @@ export default function RegisterPage() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.app);
+  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isAuthenticated) {

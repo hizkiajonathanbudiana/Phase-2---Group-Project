@@ -1,14 +1,22 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-
+import axiosInstance from "../api/axiosInstance";
+import { toast } from "react-toastify";
 // --- Thunks ---
 
+// --- Slice ---
+const initialState = {
+    name: null,
+    loading: false,
+    isAuthenticated: false,
+};
+
 // Login
+
 export const loginUser = createAsyncThunk(
-    "auth/loginUser",
-    async (credentials, { rejectWithValue }) => {
+    "app/loginUser",
+    async (data, { rejectWithValue }) => {
         try {
-            const res = await axios.post("http://localhost:3000/login", credentials);
+            const res = await axiosInstance.post("/login", data);
             return res.data;
         } catch (err) {
             return rejectWithValue(err.response?.data || err.message);
@@ -18,10 +26,10 @@ export const loginUser = createAsyncThunk(
 
 // Google OAuth Login
 export const googleLoginUser = createAsyncThunk(
-    "auth/googleLoginUser",
+    "app/googleLoginUser",
     async (tokenData, { rejectWithValue }) => {
         try {
-            const res = await axios.post("http://localhost:3000/google", tokenData);
+            const res = await axiosInstance.post("/google", tokenData);
             return res.data;
         } catch (err) {
             return rejectWithValue(err.response?.data || err.message);
@@ -31,10 +39,10 @@ export const googleLoginUser = createAsyncThunk(
 
 // Register
 export const registerUser = createAsyncThunk(
-    "auth/registerUser",
-    async ({ email, password }, { rejectWithValue }) => {
+    "app/registerUser",
+    async (data, { rejectWithValue }) => {
         try {
-            const res = await axios.post("http://localhost:3000/register", { email, password });
+            const res = await axiosInstance.post("/register", data);
             return res.data;
         } catch (err) {
             return rejectWithValue(err.response?.data || err.message);
@@ -44,10 +52,10 @@ export const registerUser = createAsyncThunk(
 
 // Fetch current user
 export const fetchUser = createAsyncThunk(
-    "auth/fetchUser",
+    "app/fetchUser",
     async (_, { rejectWithValue }) => {
         try {
-            const res = await axios.get("http://localhost:3000/auth/me");
+            const res = await axiosInstance.get("/auth/me");
             return res.data;
         } catch (err) {
             return rejectWithValue(err.response?.data || err.message);
@@ -57,22 +65,65 @@ export const fetchUser = createAsyncThunk(
 
 // Logout
 export const logoutUser = createAsyncThunk(
-    "auth/logoutUser",
+    "app/logoutUser",
     async (_, { rejectWithValue }) => {
         try {
-            await axios.post("http://localhost:3000/logout");
+            await axiosInstance.post("/logout");
         } catch (err) {
             return rejectWithValue(err.response?.data || err.message);
         }
     }
 );
 
-// --- Slice ---
-const initialState = {
-    user: null,
-    status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
-    error: null,
-};
+//verifycode
+export const handleVerifyCode = createAsyncThunk(
+    "app/handleVerifyCode",
+    async ({ verifyCode }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post("/verify", { verifyCode });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const sendVerificationCode = createAsyncThunk(
+    "app/sendVerificationCode",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post("/verify/send");
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+//forgot pass
+export const searchEmail = createAsyncThunk(
+    "app/searchEmail",
+    async (data, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post("/password/forgot", data);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const verifyForgotPass = createAsyncThunk(
+    "app/verifyForgotPass",
+    async (data, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post("/password/reset", data);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
 
 const authSlice = createSlice({
     name: "auth",
@@ -82,75 +133,98 @@ const authSlice = createSlice({
         logout: (state) => {
             state.user = null;
             state.status = "idle";
-            state.error = null;
         },
     },
     extraReducers: (builder) => {
         builder
             // loginUser
-            .addCase(loginUser.pending, (state) => {
-                state.status = "loading";
-                state.error = null;
-            })
             .addCase(loginUser.fulfilled, (state, action) => {
-                state.status = "succeeded";
-                state.user = { id: action.payload.id, email: action.payload.email };
+                state.loading = false;
+                state.name = action.payload.username;
+                state.isAuthenticated = true;
+                toast.success(`Welcome Back ${action.payload.username} !`);
             })
-            .addCase(loginUser.rejected, (state, action) => {
-                state.status = "failed";
-                state.error = action.payload?.message || action.error.message;
-            })
+
             // googleLoginUser
-            .addCase(googleLoginUser.pending, (state) => {
-                state.status = "loading";
-                state.error = null;
-            })
             .addCase(googleLoginUser.fulfilled, (state, action) => {
-                state.status = "succeeded";
-                state.user = { id: action.payload.id, email: action.payload.email };
+                state.loading = false;
+                state.name = action.payload.username;
+                state.isAuthenticated = true;
+                toast.success(`Welcome Back ${action.payload.username} !`);
             })
-            .addCase(googleLoginUser.rejected, (state, action) => {
-                state.status = "failed";
-                state.error = action.payload?.message || action.error.message;
-            })
+
             // registerUser
-            .addCase(registerUser.pending, (state) => {
-                state.status = "loading";
-                state.error = null;
-            })
             .addCase(registerUser.fulfilled, (state) => {
-                state.status = "succeeded";
-                // user stays null until explicit login
+                state.loading = false;
+                toast.success("Register account successfully");
             })
-            .addCase(registerUser.rejected, (state, action) => {
-                state.status = "failed";
-                state.error = action.payload?.message || action.error.message;
-            })
+
             // fetchUser
-            .addCase(fetchUser.pending, (state) => {
-                state.status = "loading";
-                state.error = null;
-            })
             .addCase(fetchUser.fulfilled, (state, action) => {
-                state.status = "succeeded";
+                state.loading = false;
                 state.user = action.payload;
             })
-            .addCase(fetchUser.rejected, (state) => {
-                state.status = "idle"; // not logged in
-                state.user = null;
-            })
+
             // logoutUser
-            .addCase(logoutUser.pending, (state) => {
-                state.status = "loading";
-            })
             .addCase(logoutUser.fulfilled, (state) => {
-                state.status = "succeeded";
+                state.loading = false;
                 state.user = null;
+                toast.success("Logout successfully!");
             })
-            .addCase(logoutUser.rejected, (state, action) => {
-                state.status = "failed";
-                state.error = action.payload?.message || action.error.message;
-            });
+
+            //handleVerifyCode
+            .addCase(handleVerifyCode.fulfilled, (state) => {
+                state.loading = false;
+                toast.success("Verification successful!");
+            })
+            //sendVerificationCode
+            .addCase(sendVerificationCode.fulfilled, (state) => {
+                state.loading = false;
+                toast.success("Verification code sent!");
+            })
+            //forgotpass
+            .addCase(searchEmail.fulfilled, (state) => {
+                state.loading = false;
+                toast.success("Email found! Please check your inbox.");
+            })
+
+            //resetpass
+            .addCase(verifyForgotPass.fulfilled, (state) => {
+                state.loading = false;
+                toast.success(
+                    "Password reset successful! You can now log in with your new password."
+                );
+            })
+            //pending or rejected using addmatcher
+            .addMatcher(
+                (action) => {
+                    return action.type.endsWith("/pending");
+                },
+                (state) => {
+                    state.loading = true;
+                }
+            )
+            .addMatcher(
+                (action) => {
+                    return action.type.endsWith("/rejected");
+                },
+                (state, action) => {
+                    state.loading = false;
+                    toast.error(action.payload?.message || "An error occurred");
+                }
+            )
+            .addMatcher(
+                (action) => {
+                    return (
+                        action.type.endsWith("/rejected") &&
+                        action.payload?.message?.includes("token")
+                    );
+                },
+                (state) => {
+                    state.loading = false;
+                    state.isAuthenticated = false;
+                }
+            );
     },
 });
 

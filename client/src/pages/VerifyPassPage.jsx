@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 
-import { verifyForgotPass } from "../features/appSlice";
+import { verifyForgotPass } from "../features/authSlice";
 
 export default function VerifyPassPage() {
   const [verifyCode, setVerifyCode] = useState("");
@@ -10,13 +10,9 @@ export default function VerifyPassPage() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.app);
+  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login");
-    }
-  }, [isAuthenticated, navigate, dispatch]);
+  useEffect(() => {}, [isAuthenticated, navigate, dispatch]);
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
