@@ -98,7 +98,7 @@ Return ONLY a JavaScript object like this:
 
 Do NOT include markdown, explanations, or any other extra text.
     `;
-    const response = await openai.chat.my.idpletions.create({
+    const response = await openai.chat.completions.create({
       model: "deepseek/deepseek-r1-0528:free",
       messages: [{ role: "user", content: promptString }],
       response_format: { type: "json_object" },
