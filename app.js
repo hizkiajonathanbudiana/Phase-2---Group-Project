@@ -23,7 +23,7 @@ const isProd = process.env.NODE_ENV === "production";
 const io = new Server(server, {
   cors: {
     origin: isProd
-      ? "https://quizai.hizkiajonathan.com"
+      ? "https://quizai.hizkiajonathanbudiana.my.id"
       : "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true,
@@ -34,7 +34,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: isProd
-      ? "https://quizai.hizkiajonathan.com"
+      ? "https://quizai.hizkiajonathanbudiana.my.id"
       : "http://localhost:5173",
     credentials: true,
   })
@@ -63,7 +63,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   defaultHeaders: {
     "HTTP-Referer": isProd
-      ? "https://quizai.hizkiajonathan.com"
+      ? "https://quizai.hizkiajonathanbudiana.my.id"
       : "http://localhost:5173",
     "X-Title": "QuizRush.AI",
   },
@@ -98,7 +98,7 @@ Return ONLY a JavaScript object like this:
 
 Do NOT include markdown, explanations, or any other extra text.
     `;
-    const response = await openai.chat.completions.create({
+    const response = await openai.chat.my.idpletions.create({
       model: "deepseek/deepseek-r1-0528:free",
       messages: [{ role: "user", content: promptString }],
       response_format: { type: "json_object" },
