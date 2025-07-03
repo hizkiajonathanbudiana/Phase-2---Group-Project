@@ -23,7 +23,7 @@ const isProd = process.env.NODE_ENV === "production";
 const io = new Server(server, {
   cors: {
     origin: isProd
-      ? "https://quizai.hizkiajonathan.com"
+      ? "https://quizai.hizkiajonathanbudiana.my.id"
       : "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true,
@@ -34,7 +34,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: isProd
-      ? "https://quizai.hizkiajonathan.com"
+      ? "https://quizai.hizkiajonathanbudiana.my.id"
       : "http://localhost:5173",
     credentials: true,
   })
@@ -55,7 +55,6 @@ let gameSettings = {
 
 let currentQuestion = { question: "", answer: "" };
 let isQuestionActive = false;
-let chatHistory = [];
 let votesForNewQuestion = new Set();
 
 const openai = new OpenAI({
@@ -63,7 +62,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   defaultHeaders: {
     "HTTP-Referer": isProd
-      ? "https://quizai.hizkiajonathan.com"
+      ? "https://quizai.hizkiajonathanbudiana.my.id"
       : "http://localhost:5173",
     "X-Title": "QuizRush.AI",
   },
