@@ -28,10 +28,21 @@ const ProtectedRoute = () => {
   );
 };
 
+const VerifiedRoute = () => {
+  const { user } = useSelector((state) => state.app);
+
+  if (user && !user.isVerified) {
+    return <Navigate to="/verify" replace />;
+  }
+
+  return <Outlet />;
+};
+
 function App() {
   const dispatch = useDispatch();
-
-  const { isAuthenticated, isInitializing } = useSelector((state) => state.app);
+  const { isAuthenticated, isInitializing, user } = useSelector(
+    (state) => state.app
+  );
 
   useEffect(() => {
     dispatch(fetchUser());
@@ -61,36 +72,44 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" />}
+          element={!isAuthenticated ? <LoginPage /> : <Navigate to="/rank" />}
         />
         <Route
           path="/register"
           element={
-            !isAuthenticated ? <RegisterPage /> : <Navigate to="/home" />
+            !isAuthenticated ? <RegisterPage /> : <Navigate to="/rank" />
           }
         />
         <Route
           path="/email/search"
           element={
-            !isAuthenticated ? <SearchEmailPage /> : <Navigate to="/home" />
+            !isAuthenticated ? <SearchEmailPage /> : <Navigate to="/rank" />
           }
         />
         <Route
           path="/password/verify"
           element={
-            !isAuthenticated ? <VerifyPassPage /> : <Navigate to="/home" />
+            !isAuthenticated ? <VerifyPassPage /> : <Navigate to="/rank" />
           }
         />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/rank" element={<RankPage />} />
-          <Route path="/verify" element={<VerifyPage />} />
+          <Route
+            path="/verify"
+            element={
+              user && user.isVerified ? <Navigate to="/rank" /> : <VerifyPage />
+            }
+          />
+
+          <Route element={<VerifiedRoute />}>
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/rank" element={<RankPage />} />
+          </Route>
         </Route>
 
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/home" : "/"} />}
+          element={<Navigate to={isAuthenticated ? "/rank" : "/"} />}
         />
       </Routes>
     </>

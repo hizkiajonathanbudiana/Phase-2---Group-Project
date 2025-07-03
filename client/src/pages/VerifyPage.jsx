@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 
-import { handleVerifyCode, sendVerificationCode } from "../features/authSlice";
+import {
+  handleVerifyCode,
+  sendVerificationCode,
+  logoutUser,
+} from "../features/authSlice";
+import { fetchUser } from "../features/appSlice";
 
 export default function VerifyPage() {
   const [verifyCode, setVerifyCode] = useState("");
@@ -27,12 +32,21 @@ export default function VerifyPage() {
 
     try {
       await dispatch(handleVerifyCode({ verifyCode })).unwrap();
+      await dispatch(fetchUser());
       navigate("/home");
     } catch (error) {
       console.error("Error verifying code:", error);
     }
   };
 
+  const backButton = async () => {
+    try {
+      await dispatch(logoutUser());
+      navigate("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] px-4 py-8 font-orbitron text-white">
       <div className="w-full max-w-md bg-[#1c1c2b] rounded-3xl shadow-[0_0_30px_rgba(128,0,255,0.4)] p-8 space-y-6 border border-purple-800 relative overflow-hidden">
@@ -71,12 +85,12 @@ export default function VerifyPage() {
 
           <div className="text-center mt-4">
             {/* 4. Menggunakan Link component untuk navigasi SPA yang benar */}
-            <Link
-              to="/login"
+            <button
+              onClick={() => backButton()}
               className="text-sm text-cyan-400 hover:underline hover:text-cyan-300 transition"
             >
               ← Back to Login
-            </Link>
+            </button>
           </div>
         </div>
       </div>

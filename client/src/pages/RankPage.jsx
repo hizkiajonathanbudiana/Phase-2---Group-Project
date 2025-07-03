@@ -10,8 +10,13 @@ export default function RankPage() {
 
   const { items: rankings, isLoading } = useSelector((state) => state.rankings);
 
+  const { user } = useSelector((state) => state.app);
   useEffect(() => {
-    dispatch(fetchRankings());
+    if (!user.isVerified) {
+      return navigate("/verify", { replace: true });
+    } else {
+      dispatch(fetchRankings());
+    }
   }, [dispatch]);
 
   const handleGoHome = () => {
@@ -32,7 +37,7 @@ export default function RankPage() {
               onClick={handleGoHome}
               className="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold shadow-[0_4px_20px_rgba(0,255,255,0.3)] hover:brightness-125 transition duration-300"
             >
-              ← Back to Home
+              Game
             </button>
           </div>
 

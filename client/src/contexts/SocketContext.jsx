@@ -10,7 +10,7 @@ import { io } from "socket.io-client";
 import { useSelector } from "react-redux";
 
 const SocketContext = createContext();
-const SOCKET_SERVER_URL = "http://localhost:3000";
+const SOCKET_SERVER_URL = "https://quizapi.hizkiajonathanbudiana.my.id";
 
 export function SocketProvider({ children }) {
   const { user } = useSelector((state) => state.app);
