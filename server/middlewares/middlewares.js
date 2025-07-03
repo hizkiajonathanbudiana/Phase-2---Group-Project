@@ -7,9 +7,7 @@ const protectorLogin = async (req, res, next) => {
       req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      return res
-        .status(401)
-        .json({ message: "No token provided, please login" });
+      return res.status(401).json({ message: "Please login first" });
     }
     const decoded = await verifyToken(token);
 

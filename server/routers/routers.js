@@ -3,7 +3,6 @@ const router = express.Router();
 
 const statusController = require("../controllers/statusController");
 const userController = require("../controllers/userController");
-const aiController = require("../controllers/aiController.js");
 const {
   protectorLogin,
   protectorVerify,

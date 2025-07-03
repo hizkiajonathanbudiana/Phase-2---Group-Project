@@ -16,8 +16,7 @@ const app = express();
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 
-const NEW_ROUND_DELAY_MS = 10000;
-const CHAT_HISTORY_LIMIT = 50;
+const newRoundDelay = 10000;
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -187,7 +186,7 @@ io.on("connection", (socket) => {
     io.emit("gameSettingsUpdated", gameSettings);
     io.emit(
       "gameNotification",
-      `Admin changed settings! Topic: ${gameSettings.topic}, Difficulty: ${gameSettings.rarity}`
+      `Admin changed settings! Topic: ${gameSettings.topic}, Difficulty: ${gameSettings.rarity}. Answer before were: ${currentQuestion.answer}`
     );
 
     console.log("🚀 Admin triggered a new round with new settings.");
@@ -214,7 +213,7 @@ io.on("connection", (socket) => {
         answer: currentQuestion.answer,
       });
       io.emit("updatePlayerList", Object.values(players));
-      setTimeout(startNewRound, NEW_ROUND_DELAY_MS);
+      setTimeout(startNewRound, newRoundDelay);
     } else {
       const chatMessage = { username: player.username, message: answer };
       io.emit("newChatMessage", chatMessage);
@@ -238,7 +237,7 @@ io.on("connection", (socket) => {
     if (currentVotes >= requiredVotes) {
       io.emit(
         "gameNotification",
-        "Pertanyaan dilewati berdasarkan voting! Ronde baru dimulai..."
+        `Question skipped based on votes! Answers were: ${currentQuestion.answer}. Starting new round...`
       );
       startNewRound();
     }
@@ -296,10 +295,20 @@ app.use((error, req, res, next) => {
     message = "Bad request";
   } else if (
     error.message === "UNAUTHORIZED" ||
-    error.message === "LOGININVALID"
+    error.message === "LOGININVALID" ||
+    error.message === "INVALIDLOGIN"
   ) {
     code = 401;
-    message = "Invalid credentials";
+    message = "Invalid email or password";
+  } else if (error.message === "EMAILSENDINGFAILED") {
+    code = 400;
+    message = "Failed to send verification email. Please try again later.";
+  } else if (error.message === "REGISTERFIRST") {
+    code = 400;
+    message = "Please register first";
+  } else if (error.message === "USERNOTFOUND") {
+    code = 404;
+    message = "User not found";
   }
   res.status(code).send({ message });
 });
