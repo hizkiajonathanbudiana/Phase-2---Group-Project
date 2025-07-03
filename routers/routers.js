@@ -9,23 +9,6 @@ const {
   protectorVerify,
 } = require("../middlewares/middlewares");
 
-const axios = require("axios");
-
-router.get("/quotes", async (req, res, next) => {
-  console.log("masuk ke router quotes");
-
-  try {
-    const { data } = await axios.get("http://api.quotable.io/quotes/random");
-    const quote = Array.isArray(data) ? data[0] : data;
-    res.status(200).json({
-      content: quote.content,
-      author: quote.author,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
 router.post("/login", userController.loginHandler);
 router.post("/register", userController.registerHandler);
 router.post("/google", userController.googleLogin);
@@ -47,12 +30,15 @@ router.get("/auth/me", (req, res) => {
   });
 });
 
+const isProd = process.env.NODE_ENV === "production";
+
 router.post("/logout", (req, res) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: true,
-    sameSite: "None",
+    secure: isProd,
+    sameSite: isProd ? "None" : "Lax",
     path: "/",
+    domain: isProd ? ".hizkiajonathanbudiana.my.id" : undefined,
   });
   res.status(200).json({ message: "Logout successful" });
 });
@@ -64,7 +50,5 @@ router.post("/verify/send", userController.sendVerificationEmail);
 router.use(protectorVerify);
 
 router.get("/status", statusController.getStatus);
-
-router.post("/ai", aiController.generateChat);
 
 module.exports = router;
